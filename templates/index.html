@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Smart Garden Dashboard</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+  <div class="dashboard">
+    <h1>Smart Garden Dashboard</h1>
+
+    <form method="POST" action="/">
+      <label for="plant_select"><strong>Select your plant:</strong></label><br>
+      <select name="plant_select" id="plant_select" required>
+        <option value="" disabled selected>Select plant</option>
+        {% for plant in plants %}
+          <option value="{{ plant }}" {% if plant == selected_plant %}selected{% endif %}>{{ plant }}</option>
+        {% endfor %}
+      </select>
+      <button type="submit">Check</button>
+    </form>
+
+    <ul>
+      <li><strong>Temperature:</strong> <span>{{ sensor_data.temperature if sensor_data.temperature is not none else "N/A" }} °C</span></li>
+      <li><strong>Humidity:</strong> <span>{{ sensor_data.humidity if sensor_data.humidity is not none else "N/A" }} %</span></li>
+      <li><strong>Soil Moisture:</strong> <span>{{ sensor_data.moisture if sensor_data.moisture is not none else "N/A" }}</span></li>
+      <li><strong>Light Level:</strong> <span>{{ sensor_data.light if sensor_data.light is not none else "N/A" }}</span></li>
+      <li><strong>Hour:</strong> <span>{{ sensor_data.hour if sensor_data.hour is not none else "N/A" }}</span></li>
+    </ul>
+
+    <div class="suggestions">
+      {% if suggestions %}
+        <strong>Suggestions:</strong>
+        <ul>
+          {% for s in suggestions %}
+            <li>{{ s }}</li>
+          {% endfor %}
+        </ul>
+      {% elif selected_plant %}
+        <div class="no-suggestions">All readings are within ideal ranges for {{ selected_plant }}.</div>
+      {% else %}
+        <div class="no-suggestions">Select a plant to get suggestions.</div>
+      {% endif %}
+    </div>
+
+    <label for="plant_select"><strong>Analyze Plant:</strong></label><br>
+
+    <form method="POST" action="/">
+      <button type="submit" >Check</button>
+    </form>
+    <img src="http://192.168.1.170:81/stream" width="640" height="480" alt="ESP32 Camera Stream"/>
+    <div class="suggestions">
+      {% if message %}
+        <img src="{{url_for('static', filename=image_path)}}" alt="Captured Image" class="captured-image">
+        <strong>Advice:</strong>
+        <ul>
+            <li>{{ message }}</li>
+        </ul>
+      {% elif selected_plant %}
+        <div class="no-suggestions">All readings are within ideal ranges.</div>
+      {% else %}
+        <div class="no-suggestions">Select a plant to get suggestions.</div>
+      {% endif %}
+    </div>
+  </div>
+
+  
+
+</body>
+</html>
+
