@@ -1,3 +1,5 @@
+# Synthetic dataset of 15 plants with ideal ranges
+
 plant_data = {
     "Tomato": {
         "temp": (18, 27),

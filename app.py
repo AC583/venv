@@ -1,17 +1,58 @@
-from flask import Flask, render_template, request, redirect, url_for, session
+from flask import Flask, render_template, request, redirect, url_for, session, Response
 import serial
 import time
+import os
+import cv2
 from classify import classify_image
 from imageCapture import capture_image
-from plantdata import plant_data
+import plantdata
+import requests
+import threading
+
 app = Flask(__name__)
 selected_plant = None
+text = None
+classify_image_path = None
+plant_data = plantdata.plant_data  # Load the plant data
 
 # Change this to your actual Arduino serial port
 ser = serial.Serial('COM7', 9600, timeout=1)
 time.sleep(2)  # Wait for Arduino to reset
 
-# Synthetic dataset of 15 plants with ideal ranges
+# === CONFIGURATION ===
+ESP32_URL = "http://192.168.1.170/capture"  # Replace with your ESP32 URL
+SAVE_PATH = "venv/static/images/photo_2.jpg"
+
+# === IMAGE FETCHING THREAD ===
+def fetch_from_esp32():
+    while True:
+        try:
+            capture_image(2)  # or your chosen path
+        except Exception as e:
+            print("[ERROR] Failed to fetch image:", e)
+        time.sleep(0.1)  # ~10 fps
+
+# === STREAMING FUNCTION ===
+def generate_frames():
+    image_path = "venv/static/images/photo_2.jpg"  # <- match with capture path
+
+    while True:
+        if os.path.exists(image_path):
+            frame = cv2.imread(image_path)
+            if frame is not None:
+                ret, buffer = cv2.imencode('.jpg', frame)
+                if ret:
+                    frame = buffer.tobytes()
+                    yield (b'--frame\r\n'
+                           b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
+        time.sleep(0.1)
+
+# === VIDEO FEED ROUTE ===
+@app.route('/video_feed')
+def video_feed():
+    return Response(generate_frames(),
+                    mimetype='multipart/x-mixed-replace; boundary=frame')
+
 
 
 def parse_sensor_data():
@@ -98,22 +139,31 @@ def check_ranges(sensor_data, ideal_ranges):
 
     return suggestions
 
-
-@app.route('/show_stream', methods=['GET', 'POST'])
-def my_scheduled_function():
-    # Your continuous or periodic task logic here
-    capture_image(1)
-    return render_template("stream.html", stream_image_path="images/photo_1.jpg")
-
-
 app.secret_key = 'some_secret_key'  # required for session
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
     sensor_data = parse_sensor_data()
+    text= None
+    classify_image_path = None
+
     if request.method == 'POST':
+        button_clicked = request.form.get('button')
+        print(f"[INFO] Button clicked: {button_clicked}")
         selected_plant = request.form.get('plant_select', None)
         session['selected_plant'] = selected_plant
+
+        if button_clicked == 'classify':
+            num = 1
+            capture_image(num)
+            try:
+                text = classify_image(f"venv/static/images/photo_{num}.jpg")
+                print(f"[INFO] Classification result: {text}")
+            except Exception as e:
+                print(f"[ERROR] Image classification failed: {e}")
+                text = "Image classification failed."
+            classify_image_path = 'images/photo_1.jpg'
+
     else:
         selected_plant = session.get('selected_plant', None)
 
@@ -126,20 +176,9 @@ def index():
                            plants=plant_data.keys(),
                            selected_plant=selected_plant,
                            sensor_data=sensor_data,
-                           suggestions=suggestions)
-
-@app.route('/show_output', methods=['POST'])
-def show_output():
-    num = 2
-    capture_image(num)
-    try:
-        text_output = classify_image(f"venv/static/images/photo_{num}.jpg")
-    except Exception as e:
-        print(f"[ERROR] Image classification failed: {e}")
-        text_output = "Image classification failed."
-
-    image_path = 'images/photo_1.jpg'
-    return render_template('result.html', image=image_path, text=text_output)
+                           suggestions=suggestions,
+                           text=text,
+                           classify_image_path=classify_image_path)
 
 @app.route('/WATER', methods=['POST'])
 def water_plant():
@@ -152,20 +191,16 @@ def water_plant():
     return redirect(url_for('index'))
 
 
-
+# === MAIN ===
 if __name__ == '__main__':
-    app.run(debug=True)
+    t = threading.Thread(target=fetch_from_esp32)
+    t.daemon = True
+    t.start()
+
+    app.run(host='0.0.0.0', port=5000, debug=True)
+
 
 #except serial.SerialException as e:
  #   print(f"[ERROR] Serial port issue: {e}")
 
-    
-'''
-    print("My function was called!")
-    num = 1
-    capture_image(num)
-    message = classify_image(f"bwsi-smartgarden2/venv/images/photo_{num}.jpg")
 
-    return render_template("index.html", **data, message=message)
-
-'''

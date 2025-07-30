@@ -28,15 +28,19 @@
         <li><strong>Hour:</strong> <span>{{ sensor_data.hour if sensor_data.hour is not none else "N/A" }}</span></li>
       </ul>
 
+      <label for="plant_select"><strong>Live Stream from Camera:</strong></label><br><br>
+      <img src="{{ url_for('video_feed') }}" width="360" height="480" />
       <label for="plant_select"><strong>Check your plant:</strong></label><br><br>
-      <form method="POST" action="/show_output">
-          <button type="submit">Check</button>
+      <form method="POST">
+          <button type="submit" name="button" value="classify">Check</button>
       </form>
+      {% if text %}
+        <p><strong>Classification Result:</strong> {{ text }}</p>
+      {% endif %}
+      {% if image %}
+        <img src="{{ url_for('static', filename=image) }}" alt="Output Image" width="360">
+      {% endif %}
 
-      <label for="plant_select"><strong>Check your camera stream:</strong></label><br><br>
-      <form method="POST" action="/show_stream">
-          <button type="submit">Check</button>
-      </form>
     </div>
 
     <div class="suggestions">
