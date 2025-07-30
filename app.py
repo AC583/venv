@@ -163,6 +163,8 @@ def index():
                 print(f"[ERROR] Image classification failed: {e}")
                 text = "Image classification failed."
             classify_image_path = 'images/photo_1.jpg'
+        #return redirect(url_for('index'))  # 👈 Redirect to clear POST
+
 
     else:
         selected_plant = session.get('selected_plant', None)

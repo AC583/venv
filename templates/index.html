@@ -35,7 +35,7 @@
           <button type="submit" name="button" value="classify">Check</button>
       </form>
       {% if text %}
-        <p><strong>Classification Result:</strong> {{ text }}</p>
+            <p><strong>Classification Result:</strong> {{ text }}</p>
       {% endif %}
       {% if image %}
         <img src="{{ url_for('static', filename=image) }}" alt="Output Image" width="360">
