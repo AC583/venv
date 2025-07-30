@@ -49,12 +49,13 @@
     </form>
     <div class="suggestions">
       {% if message %}
-        <img src="{{url_for('static', filename=image_path)}}" alt="Captured Image" class="captured-image">
+        {% if image_path %}
+          <img src="{{url_for('static', filename=image_path)}}" alt="Captured Image" class="captured-image">
+        {% endif %}
         <strong>Advice:</strong>
         <ul>
             <li>{{ message }}</li>
         </ul>
-
       {% endif %}
     </div>
   </div>

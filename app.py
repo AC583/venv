@@ -4,13 +4,13 @@ import serial.tools.list_ports
 import time
 from classify import classify_image
 from imageCapture import capture_image
+from apscheduler.schedulers.background import BackgroundScheduler
 
 app = Flask(__name__)
 PORT = "COM7"  # Update this if needed
 BAUD = 9600
 # Change this to your actual Arduino serial port
 ser = serial.Serial(PORT, BAUD, timeout=1)
-
 
 time.sleep(2)  # Wait for Arduino to reset
 
@@ -201,25 +201,20 @@ def index():
     sensor_data = parse_sensor_data()
 
     selected_plant = request.form.get('plant_select', None)
-    action = request.form.get('action')
-
     suggestions = []
-    message = None
-    image_path = None
-
-    if action == 'check_ranges' and selected_plant in plant_data:
+    if selected_plant in plant_data:
         ideal = plant_data[selected_plant]
         suggestions = check_ranges(sensor_data, ideal)
-    elif action == 'analyze_image':
-        num = 2
-        capture_image(num)
-        try:
-            message = classify_image(f"venv/static/images/photo_{num}.jpg")
-        except Exception as e:
-            print(f"[ERROR] Image classification failed: {e}")
-            message = "Image classification failed."
-        image_path = f'images/photo_{num}.jpg'
 
+    num = 2
+    capture_image(num)
+    try:
+        message = classify_image(f"venv/static/images/photo_{num}.jpg")
+    except Exception as e:
+        print(f"[ERROR] Image classification failed: {e}")
+        message = "Image classification failed."
+
+    image_path = f'images/photo_{num}.jpg'  # relative to /static
 
     return render_template("index.html",
                         plants=plant_data.keys(),
@@ -233,95 +228,8 @@ def index():
 #except serial.SerialException as e:
  #   print(f"[ERROR] Serial port issue: {e}")
 
-print("Starting Flask app...")  # Debug message
-if __name__ == '__main__':
-    app.run(debug=True)
-
+    
 '''
-@app.route('/analyze', methods=['GET', 'POST'])
-def analyze():
-
-    return render_template("analyze.html", s=message)
-
-
-
-    <h1>Click the Button!</h1>
-    <form action="/run_my_function" method="POST">
-        <button type="submit">Run Function</button>
-    </form>
-    <li><strong>Result: </strong> {{ message }}</li>
-
-@app.route('/')
-def index():
-    data = {
-        "temp": "N/A",
-        "hum": "N/A",
-        "moisture": "N/A",
-        "light": "N/A",
-        "hour": "N/A"
-    }
-
-    try:
-        with serial.Serial(PORT, BAUD, timeout=2) as ser:
-            time.sleep(2)  # wait for Arduino to reset
-
-            lines_read = 0
-            while lines_read < 6:
-                if ser.in_waiting:
-                    line = ser.readline().decode().strip()
-                    lines_read += 1
-
-                    if "Temperature" in line:
-                        data["temp"] = line.split(":")[1].strip()
-                    elif "Humidity" in line:
-                        data["hum"] = line.split(":")[1].strip()
-                    elif "Moisture" in line:
-                        data["moisture"] = line.split(":")[1].strip()
-                    elif "Light" in line:
-                        data["light"] = line.split(":")[1].strip()
-                    elif "Hour" in line:
-                        data["hour"] = line.split(":")[1].strip()
-
-    except serial.SerialException as e:
-        print(f"[ERROR] Serial port issue: {e}")
-
-    return render_template("index.html", **data)
-
-@app.route('/run_my_function', methods=['GET','POST'])
-def run_my_function():
-    data = {
-        "temp": "N/A",
-        "hum": "N/A",
-        "moisture": "N/A",
-        "light": "N/A",
-        "hour": "N/A"
-    }
-
-    try:
-        with serial.Serial(PORT, BAUD, timeout=2) as ser:
-            time.sleep(2)  # wait for Arduino to reset
-
-            lines_read = 0
-            while lines_read < 6:
-                if ser.in_waiting:
-                    line = ser.readline().decode().strip()
-                    lines_read += 1
-
-                    if "Temperature" in line:
-                        data["temp"] = line.split(":")[1].strip()
-                    elif "Humidity" in line:
-                        data["hum"] = line.split(":")[1].strip()
-                    elif "Moisture" in line:
-                        data["moisture"] = line.split(":")[1].strip()
-                    elif "Light" in line:
-                        data["light"] = line.split(":")[1].strip()
-                    elif "Hour" in line:
-                        data["hour"] = line.split(":")[1].strip()
-
-    except serial.SerialException as e:
-        print(f"[ERROR] Serial port issue: {e}")
-
-        # This is the Python function that will be executed
     print("My function was called!")
     num = 1
     capture_image(num)
@@ -329,6 +237,7 @@ def run_my_function():
 
     return render_template("index.html", **data, message=message)
 
-
 '''
-
+print("Starting Flask app...")  # Debug message
+if __name__ == '__main__':
+    app.run(debug=True)
