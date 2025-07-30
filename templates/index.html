@@ -5,58 +5,57 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
 </head>
 <body>
-  <div class="dashboard">
-    <h1>Smart Garden Dashboard</h1>
+  <div class="container">
+    <div class="dashboard">
+      <h1>Smart Garden Dashboard</h1>
 
-    <form method="POST" action="/">
-      <label for="plant_select"><strong>Select your plant:</strong></label><br>
-      <select name="plant_select" id="plant_select" required>
-        <option value="" disabled selected>Select plant</option>
-        {% for plant in plants %}
-          <option value="{{ plant }}" {% if plant == selected_plant %}selected{% endif %}>{{ plant }}</option>
-        {% endfor %}
-      </select>
-      <button type="submit" name="action" value="check_ranges">Check</button>
-    </form>
-
-    <ul>
-      <li><strong>Temperature:</strong> <span>{{ sensor_data.temperature if sensor_data.temperature is not none else "N/A" }} °C</span></li>
-      <li><strong>Humidity:</strong> <span>{{ sensor_data.humidity if sensor_data.humidity is not none else "N/A" }} %</span></li>
-      <li><strong>Soil Moisture:</strong> <span>{{ sensor_data.moisture if sensor_data.moisture is not none else "N/A" }}</span></li>
-      <li><strong>Light Level:</strong> <span>{{ sensor_data.light if sensor_data.light is not none else "N/A" }}</span></li>
-      <li><strong>Hour:</strong> <span>{{ sensor_data.hour if sensor_data.hour is not none else "N/A" }}</span></li>
-    </ul>
-
-    <div class="suggestions">
-      {% if suggestions %}
-        <strong>Suggestions:</strong>
-        <ul>
-          {% for s in suggestions %}
-            <li>{{ s }}</li>
+      <form method="POST" action="/">
+        <label for="plant_select"><strong>Select your plant:</strong></label><br><br>
+        <select name="plant_select" id="plant_select" required>
+          <option value="" disabled {% if not selected_plant %}selected{% endif %}>Select plant</option>
+          {% for plant in plants %}
+            <option value="{{ plant }}" {% if plant == selected_plant %}selected{% endif %}>{{ plant }}</option>
           {% endfor %}
-        </ul>
-      {% elif selected_plant %}
-        <div class="no-suggestions">All readings are within ideal ranges for {{ selected_plant }}.</div>
-      {% else %}
-        <div class="no-suggestions">Select a plant to get suggestions.</div>
-      {% endif %}
+        </select>
+        <button type="submit">Check</button>
+      </form>
+
+      <ul>
+        <li><strong>Temperature:</strong> <span>{{ sensor_data.temperature if sensor_data.temperature is not none else "N/A" }} °C</span></li>
+        <li><strong>Humidity:</strong> <span>{{ sensor_data.humidity if sensor_data.humidity is not none else "N/A" }} %</span></li>
+        <li><strong>Soil Moisture:</strong> <span>{{ sensor_data.moisture if sensor_data.moisture is not none else "N/A" }}</span></li>
+        <li><strong>Light Level:</strong> <span>{{ sensor_data.light if sensor_data.light is not none else "N/A" }}</span></li>
+        <li><strong>Hour:</strong> <span>{{ sensor_data.hour if sensor_data.hour is not none else "N/A" }}</span></li>
+      </ul>
+
+      <label for="plant_select"><strong>Check your plant:</strong></label><br><br>
+      <form method="POST" action="/show_output">
+          <button type="submit">Check</button>
+      </form>
     </div>
 
-    <label for="plant_select"><strong>Analyze Plant:</strong></label><br>
-
-    <form method="POST" action="/">
-      <button type="submit" name="action" value="analyze_image">Check</button>
-    </form>
     <div class="suggestions">
-      {% if message %}
-        {% if image_path %}
-          <img src="{{url_for('static', filename=image_path)}}" alt="Captured Image" class="captured-image">
+        {% if suggestions %}
+          <h1>Suggestions</h1>
+          <ul style="list-style: disc inside; padding-left: 0;">
+            {% for s in suggestions %}
+              <li>{{ s }}</li>
+            {% endfor %}
+            <li>Reload page to update readings.</li>
+          </ul>
+        {% elif selected_plant %}
+          <div class="no-suggestions">All readings are within ideal ranges for {{ selected_plant }}.</div>
+        {% else %}
+          <div class="no-suggestions">Select a plant to get suggestions.</div>
         {% endif %}
-        <strong>Advice:</strong>
-        <ul>
-            <li>{{ message }}</li>
-        </ul>
-      {% endif %}
+      
+        <form action="/WATER" method="POST" style="margin-top: 40px;">
+            <button type="submit">💧 Water!</button>
+        </form>
+   
+      
+        <img src="{{ url_for('static', filename='logo.png') }}" alt="" class="water-image">
+      </div>
     </div>
   </div>
 </body>
