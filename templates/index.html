@@ -16,7 +16,7 @@
           <option value="{{ plant }}" {% if plant == selected_plant %}selected{% endif %}>{{ plant }}</option>
         {% endfor %}
       </select>
-      <button type="submit">Check</button>
+      <button type="submit" name="action" value="check_ranges">Check</button>
     </form>
 
     <ul>
@@ -45,9 +45,8 @@
     <label for="plant_select"><strong>Analyze Plant:</strong></label><br>
 
     <form method="POST" action="/">
-      <button type="submit" >Check</button>
+      <button type="submit" name="action" value="analyze_image">Check</button>
     </form>
-    <img src="http://192.168.1.170:81/stream" width="640" height="480" alt="ESP32 Camera Stream"/>
     <div class="suggestions">
       {% if message %}
         <img src="{{url_for('static', filename=image_path)}}" alt="Captured Image" class="captured-image">
@@ -55,16 +54,10 @@
         <ul>
             <li>{{ message }}</li>
         </ul>
-      {% elif selected_plant %}
-        <div class="no-suggestions">All readings are within ideal ranges.</div>
-      {% else %}
-        <div class="no-suggestions">Select a plant to get suggestions.</div>
+
       {% endif %}
     </div>
   </div>
-
-  
-
 </body>
 </html>
 
